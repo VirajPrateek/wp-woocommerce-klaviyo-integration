@@ -43,5 +43,4 @@ KLAVIYO_PRIVATE_API_KEY for back-end events.
 https://woocommerce.github.io/code-reference/hooks/hooks.html 
 https://developers.klaviyo.com/en/docs/introduction_to_the_klaviyo_object#how-to-load-the-klaviyo-object 
 https://developers.klaviyo.com/en/docs/javascript_api 
-How to create or clone a private API key
 
