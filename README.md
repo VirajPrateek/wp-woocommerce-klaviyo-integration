@@ -27,5 +27,5 @@
 
 **References:**
 
-* [WooCommerce Hooks Documentation]([link to woocommerce hooks doc](https://woocommerce.github.io/code-reference/hooks/hooks.html))
+* [WooCommerce Hooks Documentation](https://woocommerce.github.io/code-reference/hooks/hooks.html)
 * [Klaviyo Server-Side API Documentation](https://a.klaviyo.com/api/track)
