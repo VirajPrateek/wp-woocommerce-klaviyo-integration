@@ -1,3 +1,4 @@
+<?php
 /*
 Description: Tracks WooCommerce order events and sends them to Klaviyo via server-side requests, with asynchronous processing for checkout events.
 Version: 2.9.4
@@ -519,3 +520,5 @@ function custom_klaviyo_send_server_side_event($event_data) {
         }
     }
 }
+
+?>
