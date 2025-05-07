@@ -1,7 +1,7 @@
 <?php
 /*
 Description: Tracks WooCommerce order events and sends them to Klaviyo via server-side requests, with asynchronous processing for checkout events.
-Version: 2.9.8
+Version: 2.9.9
 Author: Datavinci Prateek
 */
 
@@ -16,8 +16,6 @@ define('KLAVIYO_PRIVATE_API_KEY', '<KLAVIYO_PRIVATE_API_KEY>'); // Prateek's pri
 add_action('woocommerce_checkout_order_processed', 'custom_woocommerce_klaviyo_server_side_events', 10, 3);
 function custom_woocommerce_klaviyo_server_side_events(int $order_id, $posted_data, $order = null): void {
     $order_id = (int) $order_id; // Cast to handle potential string input
-    error_log('Klaviyo: Checkout order processed hook fired for order ' . $order_id);
-
     $order = $order ?: wc_get_order($order_id);
     if (!$order || $order->get_meta('_klaviyo_events_fired', true) === 'yes') {
         return;
@@ -40,8 +38,6 @@ function custom_woocommerce_klaviyo_server_side_events(int $order_id, $posted_da
 add_action('woocommerce_order_status_processing', 'custom_woocommerce_klaviyo_fallback_placed_order_events', 9, 1);
 function custom_woocommerce_klaviyo_fallback_placed_order_events(int $order_id): void {
     $order_id = (int) $order_id;
-    error_log('Klaviyo: Fallback processing hook fired for order ' . $order_id);
-
     $order = wc_get_order($order_id);
     if (!$order || $order->get_meta('_klaviyo_events_fired', true) === 'yes') {
         return;
@@ -64,8 +60,6 @@ function custom_woocommerce_klaviyo_fallback_placed_order_events(int $order_id):
 add_action('klaviyo_send_placed_order_events', 'klaviyo_process_placed_order_events', 10, 1);
 function klaviyo_process_placed_order_events(int $order_id): void {
     $order_id = (int) $order_id;
-    error_log('Klaviyo: Processing scheduled events for order ' . $order_id);
-
     $order = wc_get_order($order_id);
     if (!$order || $order->get_meta('_klaviyo_events_fired', true) === 'yes') {
         return;
@@ -154,8 +148,6 @@ function send_placed_and_ordered_product_events($order): void {
 add_action('woocommerce_order_status_on-hold', 'custom_woocommerce_klaviyo_on_hold_order', 10, 1);
 function custom_woocommerce_klaviyo_on_hold_order(int $order_id): void {
     $order_id = (int) $order_id;
-    error_log('Klaviyo: On-hold hook fired for order ' . $order_id);
-
     $order = wc_get_order($order_id);
     if (!$order) return;
 
@@ -207,8 +199,6 @@ function custom_woocommerce_klaviyo_on_hold_order(int $order_id): void {
 add_action('woocommerce_order_status_processing', 'custom_woocommerce_klaviyo_processing_order', 10, 1);
 function custom_woocommerce_klaviyo_processing_order(int $order_id): void {
     $order_id = (int) $order_id;
-    error_log('Klaviyo: Processing hook fired for order ' . $order_id);
-
     $order = wc_get_order($order_id);
     if (!$order) return;
 
@@ -260,8 +250,6 @@ function custom_woocommerce_klaviyo_processing_order(int $order_id): void {
 add_action('woocommerce_order_status_completed', 'custom_woocommerce_klaviyo_fulfilled_order', 10, 1);
 function custom_woocommerce_klaviyo_fulfilled_order(int $order_id): void {
     $order_id = (int) $order_id;
-    error_log('Klaviyo: Fulfilled hook fired for order ' . $order_id);
-
     $order = wc_get_order($order_id);
     if (!$order) return;
 
@@ -313,8 +301,6 @@ function custom_woocommerce_klaviyo_fulfilled_order(int $order_id): void {
 add_action('woocommerce_order_status_cancelled', 'custom_woocommerce_klaviyo_cancelled_order', 10, 1);
 function custom_woocommerce_klaviyo_cancelled_order(int $order_id): void {
     $order_id = (int) $order_id;
-    error_log('Klaviyo: Cancelled hook fired for order ' . $order_id);
-
     $order = wc_get_order($order_id);
     if (!$order) return;
 
@@ -365,8 +351,6 @@ add_action('woocommerce_order_refunded', 'custom_woocommerce_klaviyo_refunded_or
 function custom_woocommerce_klaviyo_refunded_order(int $order_id, int $refund_id): void {
     $order_id = (int) $order_id;
     $refund_id = (int) $refund_id;
-    error_log('Klaviyo: Refunded hook fired for order ' . $order_id);
-
     $order = wc_get_order($order_id);
     if (!$order) return;
 
@@ -421,8 +405,6 @@ function custom_woocommerce_klaviyo_refunded_order(int $order_id, int $refund_id
 add_action('woocommerce_order_status_preparing-for-shipment', 'custom_woocommerce_klaviyo_preparing_for_shipment', 10, 1);
 function custom_woocommerce_klaviyo_preparing_for_shipment(int $order_id): void {
     $order_id = (int) $order_id;
-    error_log('Klaviyo: Preparing for shipment hook fired for order ' . $order_id);
-
     $order = wc_get_order($order_id);
     if (!$order) return;
 
@@ -474,8 +456,6 @@ function custom_woocommerce_klaviyo_preparing_for_shipment(int $order_id): void 
 add_action('woocommerce_order_status_customer-is-claiming', 'custom_woocommerce_klaviyo_customer_is_claiming', 10, 1);
 function custom_woocommerce_klaviyo_customer_is_claiming(int $order_id): void {
     $order_id = (int) $order_id;
-    error_log('Klaviyo: Customer is claiming hook fired for order ' . $order_id);
-
     $order = wc_get_order($order_id);
     if (!$order) return;
 
@@ -541,17 +521,4 @@ function custom_klaviyo_send_server_side_event(array $event_data): void {
 
     $args['body'] = json_encode($args['body']);
     $response = wp_remote_post($url, $args);
-
-    if (is_wp_error($response)) {
-        error_log('Klaviyo Server-Side Event Error: ' . $response->get_error_message());
-    } else {
-        $status_code = wp_remote_retrieve_response_code($response);
-        $response_body = wp_remote_retrieve_body($response);
-        error_log('Klaviyo Response: Status ' . $status_code . ', Body: ' . $response_body);
-        if ($status_code !== 200) {
-            error_log('Klaviyo Server-Side Event Failed: Status ' . $status_code . ', Response: ' . $response_body);
-        }
-    }
 }
-
-?>
