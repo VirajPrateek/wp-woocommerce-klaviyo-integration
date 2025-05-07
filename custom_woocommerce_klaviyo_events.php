@@ -1,6 +1,6 @@
 /*
-Description: Tracks WooCommerce order events and sends them to Klaviyo via server-side requests.
-Version: 2.9.3
+Description: Tracks WooCommerce order events and sends them to Klaviyo via server-side requests, with asynchronous processing for checkout events.
+Version: 2.9.4
 Author: Datavinci Prateek
 */
 
@@ -9,10 +9,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-
 define('KLAVIYO_PRIVATE_API_KEY', '<KLAVIYO_PRIVATE_KEY>'); // Generate from Klaviyo platform
 
-// Server-Side: Placed Order and Ordered Product (on order creation)
+// Server-Side: Placed Order and Ordered Product (on order creation) - Schedule asynchronously
 add_action('woocommerce_checkout_order_processed', 'custom_woocommerce_klaviyo_server_side_events', 10, 2);
 function custom_woocommerce_klaviyo_server_side_events($order_id, $posted_data) {
     $order = wc_get_order($order_id);
@@ -20,14 +19,20 @@ function custom_woocommerce_klaviyo_server_side_events($order_id, $posted_data) 
         return;
     }
 
-    send_placed_and_ordered_product_events($order);
+    // Schedule the event sending as an asynchronous task using Action Scheduler
+    as_schedule_single_action(
+        time(), // Run as soon as possible
+        'klaviyo_send_placed_order_events', // Custom action hook
+        array('order_id' => $order_id), // Pass order ID as argument
+        'klaviyo_events' // Group for Action Scheduler
+    );
 
-    // Mark as fired
-    $order->update_meta_data('_klaviyo_events_fired', 'yes');
+    // Mark as scheduled (will be updated to 'yes' after the task runs)
+    $order->update_meta_data('_klaviyo_events_fired', 'scheduled');
     $order->save();
 }
 
-// Fallback: Ensure Placed Order and Ordered Product fire if initial hook fails
+// Fallback: Ensure Placed Order and Ordered Product fire if initial hook fails - Schedule asynchronously
 add_action('woocommerce_order_status_processing', 'custom_woocommerce_klaviyo_fallback_placed_order_events', 9, 1);
 function custom_woocommerce_klaviyo_fallback_placed_order_events($order_id) {
     $order = wc_get_order($order_id);
@@ -35,6 +40,28 @@ function custom_woocommerce_klaviyo_fallback_placed_order_events($order_id) {
         return;
     }
 
+    // Schedule the event sending as an asynchronous task using Action Scheduler
+    as_schedule_single_action(
+        time(),
+        'klaviyo_send_placed_order_events',
+        array('order_id' => $order_id),
+        'klaviyo_events'
+    );
+
+    // Mark as scheduled
+    $order->update_meta_data('_klaviyo_events_fired', 'scheduled');
+    $order->save();
+}
+
+// Action Scheduler Callback: Process the Placed Order and Ordered Product events
+add_action('klaviyo_send_placed_order_events', 'klaviyo_process_placed_order_events', 10, 1);
+function klaviyo_process_placed_order_events($order_id) {
+    $order = wc_get_order($order_id);
+    if (!$order || $order->get_meta('_klaviyo_events_fired', true) === 'yes') {
+        return;
+    }
+
+    // Send the events
     send_placed_and_ordered_product_events($order);
 
     // Mark as fired
